@@ -1,0 +1,1309 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "formTitle": "Auction Insights Analysis Data Inputs",
+                "formDescription": "Auction Insights needs to have keyword segmented data\nKeyword performance needs to have relevance performance fields",
+                "formFields": {
+                    "values": [
+                        {
+                            "fieldLabel": "Email",
+                            "fieldType": "email",
+                            "fieldName": "email",
+                            "requiredField": true
+                        },
+                        {
+                            "fieldLabel": "Auction Insights",
+                            "fieldType": "file",
+                            "fieldName": "auction_insights_file",
+                            "acceptFileTypes": "csv",
+                            "requiredField": true
+                        },
+                        {
+                            "fieldLabel": "Keyword Performance",
+                            "fieldType": "file",
+                            "fieldName": "keyword_file",
+                            "acceptFileTypes": "csv",
+                            "requiredField": true
+                        },
+                        {
+                            "fieldLabel": "Ad Report",
+                            "fieldType": "file",
+                            "fieldName": "ad_report_file",
+                            "acceptFileTypes": "csv",
+                            "requiredField": true
+                        },
+                        {
+                            "fieldLabel": "Importance Metric",
+                            "fieldType": "dropdown",
+                            "fieldName": "importance_metric",
+                            "defaultValue": "impressions",
+                            "fieldOptions": {
+                                "values": [
+                                    {
+                                        "option": "impressions"
+                                    },
+                                    {
+                                        "option": "clicks"
+                                    },
+                                    {
+                                        "option": "conversions"
+                                    },
+                                    {
+                                        "option": "weighted"
+                                    }
+                                ]
+                            },
+                            "requiredField": true
+                        },
+                        {
+                            "fieldLabel": "Competitor Filter Metric",
+                            "fieldType": "dropdown",
+                            "fieldName": "competitor_filter_metric",
+                            "defaultValue": "search_impr_share",
+                            "fieldOptions": {
+                                "values": [
+                                    {
+                                        "option": "search_impr_share"
+                                    },
+                                    {
+                                        "option": "overlap_rate"
+                                    },
+                                    {
+                                        "option": "position_above_rate"
+                                    },
+                                    {
+                                        "option": "outranking_share"
+                                    },
+                                    {
+                                        "option": "top_of_page_rate"
+                                    },
+                                    {
+                                        "option": "abs_top_of_page_rate"
+                                    }
+                                ]
+                            },
+                            "requiredField": true
+                        },
+                        {
+                            "fieldLabel": "Competitor Filter Threshold",
+                            "fieldType": "number",
+                            "fieldName": "competitor_filter_threshold",
+                            "defaultValue": "0.1",
+                            "requiredField": true
+                        },
+                        {
+                            "fieldLabel": "Minimum Impressions Filter",
+                            "fieldType": "number",
+                            "fieldName": "min_impressions"
+                        },
+                        {
+                            "fieldLabel": "Minimum Cost Filter",
+                            "fieldType": "number",
+                            "fieldName": "min_cost"
+                        }
+                    ]
+                },
+                "options": {
+                    "respondWithOptions": {
+                        "values": {
+                            "formSubmittedText": "Thanks, expect an email soon! It takes about 30 mins."
+                        }
+                    }
+                }
+            },
+            "type": "n8n-nodes-base.formTrigger",
+            "typeVersion": 2.5,
+            "position": [
+                624,
+                304
+            ],
+            "id": "debeec61-a68a-47db-85bb-a6f18e162e81",
+            "name": "Inputs-Form",
+            "webhookId": "YOUR_WEBHOOK_ID"
+        },
+        {
+            "parameters": {
+                "operation": "Run actor and get dataset",
+                "actorId": {
+                    "__rl": true,
+                    "value": "nFJndFXA5zjCTuudP",
+                    "mode": "list",
+                    "cachedResultName": "Google Search Results Scraper (apify/google-search-scraper)",
+                    "cachedResultUrl": "https://console.apify.com/actors/nFJndFXA5zjCTuudP/input"
+                },
+                "customBody": "={{ $json.apifyInput }}",
+                "timeout": {},
+                "memory": 4096,
+                "authentication": "apifyOAuth2Api"
+            },
+            "type": "@apify/n8n-nodes-apify.apify",
+            "typeVersion": 1,
+            "position": [
+                3360,
+                304
+            ],
+            "id": "542e95cb-341f-4786-899b-acab4274a645",
+            "name": "Apify Scrape Google Paid Results",
+            "credentials": {
+                "apifyOAuth2Api": {
+                    "id": "YOUR_APIFY_CREDENTIAL_ID",
+                    "name": "Apify API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "binaryPropertyName": "auction_insights_file",
+                "options": {
+                    "delimiter": "\t",
+                    "encoding": "utf16le",
+                    "headerRow": true,
+                    "fromLine": 3
+                }
+            },
+            "type": "n8n-nodes-base.extractFromFile",
+            "typeVersion": 1.1,
+            "position": [
+                912,
+                304
+            ],
+            "id": "e4997bbb-87b7-408e-9316-a7e7dbfd27c0",
+            "name": "Parse Auction File"
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "advanced": true,
+                "mergeByFields": {
+                    "values": [
+                        {
+                            "field1": "Keyword ID",
+                            "field2": "Keyword ID"
+                        }
+                    ]
+                },
+                "joinMode": "enrichInput2",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3.2,
+            "position": [
+                1136,
+                288
+            ],
+            "id": "c20b96e2-d199-45fd-a59d-93a052c252ba",
+            "name": "Enrich Auction with KW Perf"
+        },
+        {
+            "parameters": {
+                "jsCode": "function parsePercent(val) {\n  if (val === null || val === undefined) return null;\n  if (typeof val === \"number\") return val;\n\n  const str = String(val).trim();\n  if (!str || str === \"--\") return null;\n\n  // treat \"\u003c 10%\" as 0 so it is excluded by threshold 0.1\n  if (str.includes(\"\u003c\")) return 0;\n\n  const n = parseFloat(str.replace(\"%\", \"\").trim());\n  return Number.isFinite(n) ? n / 100 : null;\n}\n\nfunction safeNum(x) {\n  const n = Number(x);\n  return Number.isFinite(n) ? n : 0;\n}\n\nfunction cleanCopy(x) {\n  const s = String(x ?? \"\").trim();\n  if (!s || s === \"--\") return null;\n  return s.replace(/\\s+/g, \" \");\n}\n\nconst keywordMap = {};\n\nfor (const item of items) {\n  const r = item.json;\n\n  const keywordId = r[\"Keyword ID\"];\n  if (!keywordId) continue;\n\n  if (!keywordMap[keywordId]) {\n    keywordMap[keywordId] = {\n      keyword_id: String(keywordId),\n      keyword: r[\"Search keyword\"] || r[\"Keyword\"] || null,\n\n      impressions: safeNum(r[\"Impr.\"] ?? r[\"Impressions\"] ?? r.impr),\n      clicks: safeNum(r[\"Clicks\"] ?? r.clicks),\n      conversions: safeNum(r[\"Conversions\"] ?? r[\"Conv.\"] ?? r[\"All conv.\"] ?? r.conversions),\n      cost: safeNum(r[\"Cost\"] ?? r.cost),\n\n      our_domain: null,\n      our_impression_share: null,\n\n      our_finalUrl: null,\n      our_headlines: [],\n      our_descriptions: [],\n\n      competitors: []\n    };\n  }\n\n  const domainRaw = r[\"Display URL domain\"] ?? r.domain ?? null;\n  const domain = domainRaw ? String(domainRaw).trim() : null;\n  const isYou = domain \u0026\u0026 domain.toLowerCase() === \"you\";\n\n  const rowData = {\n    domain,\n    impression_share: parsePercent(r[\"Search Impr. share (Auction Insights)\"]),\n    overlap_rate: parsePercent(r[\"Search overlap rate\"]),\n    position_above_rate: parsePercent(r[\"Position above rate\"]),\n    top_of_page_rate: parsePercent(r[\"Top of page rate\"]),\n    abs_top_of_page_rate: parsePercent(r[\"Abs. Top of page rate\"]),\n    outranking_share: parsePercent(r[\"Search outranking share\"])\n  };\n\n  if (isYou) {\n    keywordMap[keywordId].our_domain = domain;\n    keywordMap[keywordId].our_impression_share = rowData.impression_share;\n  } else {\n    if (rowData.domain) keywordMap[keywordId].competitors.push(rowData);\n  }\n\n  // Ad Report enrichment fields\n  const finalUrl = cleanCopy(r[\"Final URL\"] ?? r[\"Ad final URL\"] ?? r[\"Mobile final URL\"]);\n  if (finalUrl \u0026\u0026 !keywordMap[keywordId].our_finalUrl) {\n    keywordMap[keywordId].our_finalUrl = finalUrl;\n  }\n\n  // Collect RSA headlines and descriptions if present\n  const hSet = new Set(keywordMap[keywordId].our_headlines);\n  const dSet = new Set(keywordMap[keywordId].our_descriptions);\n\n  for (let i = 1; i \u003c= 15; i++) {\n    const h = cleanCopy(r[`Headline ${i}`]);\n    if (h) hSet.add(h);\n  }\n\n  for (let i = 1; i \u003c= 4; i++) {\n    const d = cleanCopy(r[`Description ${i}`]);\n    if (d) dSet.add(d);\n  }\n\n  keywordMap[keywordId].our_headlines = [...hSet];\n  keywordMap[keywordId].our_descriptions = [...dSet];\n}\n\nreturn Object.values(keywordMap).map(k =\u003e ({ json: k }));\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1664,
+                288
+            ],
+            "id": "09504a96-9da2-4778-8614-a50512b32b6e",
+            "name": "Normalize KW Rows \u0026 Comp Metrics"
+        },
+        {
+            "parameters": {
+                "jsCode": "function safeNum(x, def = 0) {\n  const n = Number(x);\n  return Number.isFinite(n) ? n : def;\n}\n\nfunction getFormValue(key, fallback) {\n  const form = $items(\"Inputs-Form\", 0, 0)?.[0]?.json || {};\n  const v = form[key];\n  return v === undefined || v === null || v === \"\" ? fallback : v;\n}\n\nconst importanceMetric = String(getFormValue(\"importance_metric\", \"impressions\")).toLowerCase();\nconst filterMetric = String(getFormValue(\"competitor_filter_metric\", \"search_impr_share\")).toLowerCase();\nconst filterThreshold = safeNum(getFormValue(\"competitor_filter_threshold\", 0.1), 0.1);\n\nconst minImpr = safeNum(getFormValue(\"min_impressions\", 0), 0);\nconst minCost = safeNum(getFormValue(\"min_cost\", 0), 0);\n\n// Optional weights if you later add them to the form\nconst wImpr = safeNum(getFormValue(\"w_impr\", 1), 1);\nconst wClick = safeNum(getFormValue(\"w_click\", 20), 20);\nconst wConv = safeNum(getFormValue(\"w_conv\", 200), 200);\n\nfunction baseScoreForKeyword(k) {\n  const impr = safeNum(k.impressions, 0);\n  const clicks = safeNum(k.clicks, 0);\n  const conv = safeNum(k.conversions, 0);\n\n  if (importanceMetric === \"impressions\") return impr;\n  if (importanceMetric === \"clicks\") return clicks;\n  if (importanceMetric === \"conversions\") return conv;\n  if (importanceMetric === \"weighted\") return wImpr * impr + wClick * clicks + wConv * conv;\n\n  return impr;\n}\n\nconst metricFieldMap = {\n  search_impr_share: \"impression_share\",\n  overlap_rate: \"overlap_rate\",\n  position_above_rate: \"position_above_rate\",\n  outranking_share: \"outranking_share\",\n  top_of_page_rate: \"top_of_page_rate\",\n  abs_top_of_page_rate: \"abs_top_of_page_rate\",\n};\n\nconst competitorField = metricFieldMap[filterMetric] || \"impression_share\";\n\n// Global totals for top domains\nconst domainTotals = {}; // rootDomain string or domain string, we keep as provided\nconst keywordRows = [];\n\nfor (const item of items) {\n  const k = item.json;\n\n  const keywordId = k.keyword_id ?? null;\n  const keyword = k.keyword ?? null;\n  if (!keywordId || !keyword) continue;\n\n  // Safety filters for relevance\n  if (safeNum(k.impressions, 0) \u003c minImpr) continue;\n  if (safeNum(k.cost, 0) \u003c minCost) continue;\n\n  const scoreAdd = baseScoreForKeyword(k);\n  if (scoreAdd \u003c= 0) continue;\n\n  const comps = Array.isArray(k.competitors) ? k.competitors : [];\n\n  const filteredCompetitors = [];\n\n  for (const c of comps) {\n    const domain = c.domain ? String(c.domain).trim().toLowerCase() : null;\n    if (!domain || domain === \"you\") continue;\n\n    const m = safeNum(c[competitorField], 0); // already decimal\n    if (m \u003c filterThreshold) continue;\n\n    // Overlap presence scoring\n    domainTotals[domain] = (domainTotals[domain] || 0) + scoreAdd;\n\n    filteredCompetitors.push({\n      domain,\n      competitor_metric_name: competitorField,\n      competitor_metric_value: m,\n      threat_score: scoreAdd,\n    });\n  }\n\n  if (!filteredCompetitors.length) continue;\n\n  // Keyword score reflects both importance and competitive breadth\n  const keyword_score = scoreAdd * filteredCompetitors.length;\n\n  filteredCompetitors.sort((a, b) =\u003e b.competitor_metric_value - a.competitor_metric_value);\n\n  keywordRows.push({\n    keyword_id: keywordId,\n    keyword,\n    impressions: safeNum(k.impressions, 0),\n    clicks: safeNum(k.clicks, 0),\n    conversions: safeNum(k.conversions, 0),\n\n    importance_metric: importanceMetric,\n    competitor_filter_metric: competitorField,\n    competitor_filter_threshold: filterThreshold,\n\n    keyword_score,\n    score_add_used: scoreAdd,\n    competitors_filtered: filteredCompetitors,\n\n    our_finalUrl: k.our_finalUrl || null,\n    our_headlines: Array.isArray(k.our_headlines) ? k.our_headlines : [],\n    our_descriptions: Array.isArray(k.our_descriptions) ? k.our_descriptions : [],\n\n  });\n}\n\nconst topDomains = Object.entries(domainTotals)\n  .map(([domain, total_score]) =\u003e ({ domain, total_score }))\n  .sort((a, b) =\u003e b.total_score - a.total_score)\n  .slice(0, 5);\n\nconst topDomainSet = new Set(topDomains.map((d) =\u003e d.domain));\n\nkeywordRows.sort((a, b) =\u003e b.keyword_score - a.keyword_score);\n\nconst topKeywords = keywordRows.slice(0, 5).map((k) =\u003e {\n  const boosted = k.competitors_filtered\n    .map((c) =\u003e ({\n      ...c,\n      domain_total_overlap_score: domainTotals[c.domain] || 0,\n      final_score: c.threat_score * (topDomainSet.has(c.domain) ? 1.5 : 1.0),\n    }))\n    .sort(\n      (a, b) =\u003e\n        b.final_score - a.final_score || b.domain_total_overlap_score - a.domain_total_overlap_score\n    );\n\n  return {\n    ...k,\n    top_domains: topDomains,\n    top_competitors: boosted.slice(0, 5),\n  };\n});\n\nreturn topKeywords.map((k) =\u003e ({ json: k }));\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1872,
+                288
+            ],
+            "id": "45cb3113-f171-4a2d-a376-f339cc4e4131",
+            "name": "Select Top KWs \u0026 Comps"
+        },
+        {
+            "parameters": {
+                "jsCode": "const SLD = new Set([\n  \"co.uk\", \"org.uk\", \"ac.uk\",\n  \"com.au\", \"net.au\", \"org.au\",\n  \"co.in\", \"com.in\",\n  \"co.nz\",\n  \"com.br\",\n  \"com.mx\",\n  \"com.sg\",\n  \"com.tr\",\n]);\n\nfunction rootDomain(host) {\n  if (!host) return null;\n  const h = String(host).toLowerCase().replace(/^www\\./, \"\");\n  const parts = h.split(\".\");\n  if (parts.length \u003c= 2) return h;\n\n  const last2 = parts.slice(-2).join(\".\");\n  const last3 = parts.slice(-3).join(\".\");\n\n  if (SLD.has(last2) \u0026\u0026 parts.length \u003e= 3) return last3;\n  return last2;\n}\n\nfunction brandFromDomain(d) {\n  const rd = rootDomain(d);\n  if (!rd) return null;\n  const base = rd.split(\".\")[0];\n  const cleaned = base.replace(/[^a-z0-9]/g, \" \").trim();\n  return cleaned || null;\n}\n\n// You can set 2 if you want fewer calls\nconst SCRAPE_RUNS = 3;\n\nconst out = [];\n\nfor (const item of items) {\n  const k = item.json;\n  const keyword = k.keyword ? String(k.keyword).trim() : null;\n  if (!keyword) continue;\n\n  const brands = (k.top_competitors || [])\n    .map((c) =\u003e brandFromDomain(c.domain))\n    .filter(Boolean);\n\n  const uniqueBrands = [];\n  const seen = new Set();\n  for (const b of brands) {\n    const key = b.toLowerCase();\n    if (seen.has(key)) continue;\n    seen.add(key);\n    uniqueBrands.push(b);\n    if (uniqueBrands.length \u003e= SCRAPE_RUNS - 1) break;\n  }\n\n  const queries = [];\n  queries.push({ scrape_run: 1, query: keyword });\n\n  for (let i = 0; i \u003c uniqueBrands.length; i++) {\n    queries.push({ scrape_run: i + 2, query: `${uniqueBrands[i]} ${keyword}` });\n  }\n\n  for (const q of queries) {\n    out.push({\n      json: {\n        keyword,\n        scrape_run: q.scrape_run,\n        query: q.query,\n        apifyInput: {\n          countryCode: \"nl\",\n          focusOnPaidAds: true,\n          forceExactMatch: false,\n          includeIcons: false,\n          includeUnfilteredResults: false,\n          maxPagesPerQuery: q.scrape_run === 1 ? 2 : 1,\n          maximumLeadsEnrichmentRecords: 0,\n          mobileResults: false,\n          perplexitySearch: {\n            enablePerplexity: false,\n            returnImages: false,\n            returnRelatedQuestions: false,\n          },\n          queries: q.query,\n          resultsPerPage: 50,\n          saveHtml: false,\n          saveHtmlToKeyValueStore: true,\n        },\n      },\n    });\n  }\n}\n\nreturn out;\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2176,
+                288
+            ],
+            "id": "1abcd411-24a6-4841-a33e-cde3ff6b988b",
+            "name": "Build 3 Pass SERP Queries"
+        },
+        {
+            "parameters": {
+                "jsCode": "const SLD = new Set([\n  \"co.uk\", \"org.uk\", \"ac.uk\",\n  \"com.au\", \"net.au\", \"org.au\",\n  \"co.in\", \"com.in\",\n  \"co.nz\",\n  \"com.br\",\n  \"com.mx\",\n  \"com.sg\",\n  \"com.tr\",\n]);\n\nfunction firstUrlLike(x) {\n  if (!x) return null;\n  if (typeof x === \"string\") return x.trim() || null;\n  if (Array.isArray(x)) {\n    for (const v of x) {\n      const s = firstUrlLike(v);\n      if (s) return s;\n    }\n    return null;\n  }\n  if (typeof x === \"object\") {\n    // Check all common Apify URL fields\n    return x.finalUrl || x.directUrl || x.url || x.href || x.link || x.direct_url || x.final_url || null;\n  }\n  return null;\n}\n\nfunction hostFromUrl(value) {\n  let raw = firstUrlLike(value);\n  if (!raw) return null;\n\n  // Ensure protocol exists for the URL parser\n  if (!raw.startsWith(\"http\")) {\n    raw = \"https://\" + raw;\n  }\n\n  try {\n    return new URL(raw).hostname.toLowerCase().replace(/^www\\./, \"\");\n  } catch (e) {\n    // Fallback regex if URL parser fails\n    const match = raw.match(/^(?:https?:\\/\\/)?([^/]+)/i);\n    return match ? match[1].toLowerCase().replace(/^www\\./, \"\") : null;\n  }\n}\n\nfunction rootDomain(host) {\n  if (!host) return null;\n  const h = String(host).toLowerCase().replace(/^www\\./, \"\");\n  const parts = h.split(\".\");\n  if (parts.length \u003c= 2) return h;\n\n  const last2 = parts.slice(-2).join(\".\");\n  const last3 = parts.slice(-3).join(\".\");\n\n  if (SLD.has(last2) \u0026\u0026 parts.length \u003e= 3) return last3;\n  return last2;\n}\n\nfunction normText(s) {\n  return String(s || \"\").toLowerCase().trim().replace(/\\s+/g, \" \");\n}\n\n// ---------------------------------------------------------\n// Main Logic\n// ---------------------------------------------------------\n\n// 1. Map inputs to Base Keywords\nconst baseKeywordItems = $items(\"Select Top KWs \u0026 Comps\", 0, 0) || [];\nconst baseKeywords = baseKeywordItems\n  .map((i) =\u003e i.json?.keyword)\n  .filter(Boolean)\n  .map((k) =\u003e String(k).trim());\n\nconst baseKeywordsNorm = baseKeywords.map((k) =\u003e ({\n  raw: k,\n  norm: normText(k),\n  len: normText(k).length,\n}));\n\nfunction mapToBaseKeyword(term) {\n  const t = normText(term);\n  let best = null;\n  for (const bk of baseKeywordsNorm) {\n    if (!bk.norm) continue;\n    if (t.includes(bk.norm)) {\n      if (!best || bk.len \u003e best.len) best = bk;\n    }\n  }\n  if (!best \u0026\u0026 baseKeywordsNorm.length === 1) return baseKeywordsNorm[0].raw;\n  return best ? best.raw : term;\n}\n\nfunction safePos(x) {\n  const n = Number(x);\n  return Number.isFinite(n) ? n : 999;\n}\n\nconst byBase = {};\n\nfor (const item of items) {\n  const page = item.json;\n  const term = page?.searchQuery?.term ? String(page.searchQuery.term).trim() : null;\n  if (!term) continue;\n\n  const keyword = mapToBaseKeyword(term);\n  const scrapeRun = page.scrape_run ?? null;\n  const queryUsed = page.query ?? term;\n\n  if (!byBase[keyword]) {\n    byBase[keyword] = {\n      keyword,\n      live_paid_competitors_root: new Set(),\n      paid_ads: [],\n      seen_runs_by_root: {},\n      best_ad_by_root: {},\n    };\n  }\n\n  const paid = page.paidResults || [];\n  \n  for (const ad of paid) {\n    // 1. Get the URL\n    const finalUrl = firstUrlLike(ad.finalUrl) || firstUrlLike(ad.directUrl) || firstUrlLike(ad.url);\n    \n    // 2. Extract Host \u0026 Root Domain (With Fallbacks)\n    let host = hostFromUrl(finalUrl);\n    if (!host) host = hostFromUrl(ad.displayedUrl); // Try displayed URL if final is weird\n    \n    const root = rootDomain(host);\n\n    if (root) {\n      byBase[keyword].live_paid_competitors_root.add(root);\n      if (!byBase[keyword].seen_runs_by_root[root]) {\n        byBase[keyword].seen_runs_by_root[root] = new Set();\n      }\n      if (scrapeRun !== null) {\n        byBase[keyword].seen_runs_by_root[root].add(String(scrapeRun));\n      }\n    }\n\n    const adObj = {\n      keyword,\n      query_used: queryUsed,\n      scrape_run: scrapeRun,\n      host_domain: host,\n      root_domain: root, // This will now be populated correctly\n      headline: ad.title || ad.headline || null,\n      description: ad.description || ad.desc || null,\n      finalUrl,\n      adPosition: ad.adPosition ?? null,\n    };\n\n    byBase[keyword].paid_ads.push(adObj);\n\n    if (root \u0026\u0026 finalUrl) {\n      const p = safePos(adObj.adPosition);\n      const existing = byBase[keyword].best_ad_by_root[root];\n      const ep = existing ? safePos(existing.adPosition) : 999;\n\n      if (!existing || p \u003c ep) {\n        byBase[keyword].best_ad_by_root[root] = adObj;\n      }\n    }\n  }\n}\n\nreturn Object.values(byBase).map((x) =\u003e {\n  const seenCountByRoot = {};\n  for (const [root, runSet] of Object.entries(x.seen_runs_by_root)) {\n    seenCountByRoot[root] = runSet.size;\n  }\n\n  return {\n    json: {\n      keyword: x.keyword,\n      live_paid_competitors_root: [...x.live_paid_competitors_root],\n      paid_ads: x.paid_ads,\n      best_ad_by_root: x.best_ad_by_root,\n      seen_count_by_root: seenCountByRoot,\n    },\n  };\n});"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                3584,
+                304
+            ],
+            "id": "66deae61-6428-42cd-bf67-594afefdfc87",
+            "name": "Extract Paid Ads \u0026 LPs"
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "advanced": true,
+                "mergeByFields": {
+                    "values": [
+                        {
+                            "field1": "keyword",
+                            "field2": "keyword"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3.2,
+            "position": [
+                1872,
+                736
+            ],
+            "id": "b827e513-9cea-4f25-bf7d-4c0079292512",
+            "name": "Enrich KWs with Live SERP"
+        },
+        {
+            "parameters": {
+                "jsCode": "const SLD = new Set([\n  \"co.uk\", \"org.uk\", \"ac.uk\",\n  \"com.au\", \"net.au\", \"org.au\",\n  \"co.in\", \"com.in\",\n  \"co.nz\",\n  \"com.br\",\n  \"com.mx\",\n  \"com.sg\",\n  \"com.tr\",\n]);\n\nfunction rootDomain(host) {\n  if (!host) return null;\n  const h = String(host).toLowerCase().replace(/^www\\./, \"\");\n  const parts = h.split(\".\");\n  if (parts.length \u003c= 2) return h;\n\n  const last2 = parts.slice(-2).join(\".\");\n  const last3 = parts.slice(-3).join(\".\");\n\n  if (SLD.has(last2) \u0026\u0026 parts.length \u003e= 3) return last3;\n  return last2;\n}\n\nreturn items.map((item) =\u003e {\n  const k = item.json;\n\n  const liveSet = new Set((k.live_paid_competitors_root || []).map((d) =\u003e rootDomain(d)));\n\n  const prioritized = (k.top_competitors || [])\n    .map((c) =\u003e {\n      const root = rootDomain(c.domain);\n      const live = root ? liveSet.has(root) : false;\n      const seen = root ? (k.seen_count_by_root?.[root] || 0) : 0;\n\n      const coverageMultiplier = 1 + 0.25 * Math.min(seen, 3);\n      const final_score = (c.threat_score || 0) * (live ? 1.5 : 1.0) * coverageMultiplier;\n\n      return { ...c, root_domain: root, live, seen_count: seen, final_score };\n    })\n    .sort((a, b) =\u003e b.final_score - a.final_score);\n\n  return { json: { ...k, prioritized_competitors: prioritized } };\n});\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2096,
+                736
+            ],
+            "id": "958d991d-cdd4-4444-8e84-832a7ef20665",
+            "name": "Rescore Comp"
+        },
+        {
+            "parameters": {
+                "jsCode": "const SLD = new Set([\n  \"co.uk\", \"org.uk\", \"ac.uk\", \"com.au\", \"net.au\", \"org.au\",\n  \"co.in\", \"com.in\", \"co.nz\", \"com.br\", \"com.mx\", \"com.sg\", \"com.tr\"\n]);\nfunction rootDomain(host) {\n  if (!host) return null;\n  const h = String(host).toLowerCase().replace(/^www\\./, \"\");\n  const parts = h.split(\".\");\n  if (parts.length \u003c= 2) return h;\n  const last2 = parts.slice(-2).join(\".\");\n  const last3 = parts.slice(-3).join(\".\");\n  return (SLD.has(last2) \u0026\u0026 parts.length \u003e= 3) ? last3 : last2;\n}\nconst out = [];\nfor (const item of items) {\n  const k = item.json;\n  \n  // Take top 2 competitors\n  const selected = (k.prioritized_competitors || []).slice(0, 2);\n  for (const c of selected) {\n    const root = rootDomain(c.domain) || c.root_domain;\n    if (!root) continue;\n    // 1. Try Lookup Map (Fastest)\n    let bestAd = k.best_ad_by_root?.[root];\n    // 2. Manual Search (Fallback)\n    if (!bestAd) {\n      const candidates = (k.paid_ads || []).filter(a =\u003e a.root_domain === root \u0026\u0026 a.finalUrl);\n      candidates.sort((a, b) =\u003e (Number(a.adPosition)||999) - (Number(b.adPosition)||999));\n      bestAd = candidates[0];\n    }\n    if (bestAd \u0026\u0026 bestAd.finalUrl) {\n      out.push({\n        json: {\n          keyword: k.keyword,\n          competitor_domain: c.domain,\n          competitor_root: root,\n          finalUrl: bestAd.finalUrl,\n          ad_headline: bestAd.headline,\n          ad_description: bestAd.description,\n          ad_position: bestAd.adPosition,\n          final_score: c.final_score,\n          // --- NEW FIELDS ---\n          our_finalUrl: k.our_finalUrl || null,\n          our_headlines: k.our_headlines || [],\n          our_descriptions: k.our_descriptions || []\n        }\n      });\n    }\n  }\n}\nreturn out;"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2304,
+                736
+            ],
+            "id": "4f5a8cf3-8e42-4afc-875e-6bd422aa2dfb",
+            "name": "Output Final Review Rows",
+            "alwaysOutputData": false
+        },
+        {
+            "parameters": {
+                "binaryPropertyName": "ad_report_file",
+                "options": {
+                    "delimiter": "\t",
+                    "encoding": "utf16le",
+                    "headerRow": true,
+                    "fromLine": 3
+                }
+            },
+            "type": "n8n-nodes-base.extractFromFile",
+            "typeVersion": 1.1,
+            "position": [
+                912,
+                512
+            ],
+            "id": "70a5793f-860f-45a7-89c2-89dd71a3c52f",
+            "name": "Parse Ad Report File"
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "advanced": true,
+                "mergeByFields": {
+                    "values": [
+                        {
+                            "field1": "Keyword ID",
+                            "field2": "Keyword ID"
+                        }
+                    ]
+                },
+                "joinMode": "enrichInput1",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3.2,
+            "position": [
+                1376,
+                384
+            ],
+            "id": "7058e817-b9e2-4fac-9305-839e5cc787d8",
+            "name": "Merge"
+        },
+        {
+            "parameters": {
+                "jsCode": "function normKw(s) {\n  return String(s || \"\").trim().toLowerCase().replace(/\\s+/g, \" \");\n}\n\nreturn items.map(item =\u003e {\n  const j = item.json;\n  const keyword = j.keyword;\n  const countryCode = j.countryCode || \"nl\";\n  const mobileResults = j.mobileResults ?? false;\n  const scrape_pass = Number(j.scrape_pass ?? 1);\n\n  const cache_key = [\n    \"paidads\",\n    countryCode,\n    mobileResults ? \"m\" : \"d\",\n    `p${scrape_pass}`,\n    normKw(keyword),\n  ].join(\"|\");\n\n  return {\n    json: {\n      ...j,\n      countryCode,\n      mobileResults,\n      scrape_pass,\n      cache_key,\n      stale_hours: 72\n    }\n  };\n});"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2384,
+                288
+            ],
+            "id": "5a4e689c-de71-40ce-9f6e-ba93cb8d90f6",
+            "name": "Build Cache Keys"
+        },
+        {
+            "parameters": {
+                "operation": "rowNotExists",
+                "dataTableId": {
+                    "__rl": true,
+                    "value": "YOUR_DATA_TABLE_ID",
+                    "mode": "list",
+                    "cachedResultName": "paid_ads_cache",
+                    "cachedResultUrl": "/projects/YOUR_PROJECT_ID/datatables/YOUR_DATA_TABLE_ID"
+                },
+                "matchType": "allConditions",
+                "filters": {
+                    "conditions": [
+                        {
+                            "keyName": "cache_key",
+                            "keyValue": "={{ $json.cache_key }}"
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.dataTable",
+            "typeVersion": 1.1,
+            "position": [
+                2576,
+                288
+            ],
+            "id": "6cc52c5c-b5c0-4e97-b7d1-e704cef1f190",
+            "name": "Cache Missing"
+        },
+        {
+            "parameters": {
+                "jsCode": "const now = Date.now();\n\nfunction parsePayload(s) {\n  if (typeof s !== \"string\") return s || null;\n  const t = s.trim();\n  if (!t) return null;\n  try { return JSON.parse(t); } catch { return null; }\n}\n\nreturn items.map(item =\u003e {\n  const r = item.json;\n\n  const fetchedAt = r.fetched_at ? new Date(r.fetched_at).getTime() : NaN;\n  const ageHours = Number.isFinite(fetchedAt) ? (now - fetchedAt) / 36e5 : Infinity;\n  const staleHours = Number(r.stale_hours ?? 72);\n\n  return {\n    json: {\n      cache_key: r.cache_key,\n      keyword: r.keyword,\n      countryCode: r.countryCode,\n      mobileResults: r.mobileResults,\n      scrape_pass: r.scrape_pass,\n      fetched_at: r.fetched_at,\n      cache_age_hours: ageHours,\n      cache_stale: ageHours \u003e staleHours,\n      cached_payload: parsePayload(r.payload)\n    }\n  };\n});\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2768,
+                512
+            ],
+            "id": "2eba51a3-7129-4e0a-82a8-39da9651443d",
+            "name": "Cache Fresh or Stale"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 3
+                    },
+                    "conditions": [
+                        {
+                            "id": "214f6eea-9d2a-48de-adba-7685299cfc39",
+                            "leftValue": "={{ $json.cache_stale }}",
+                            "rightValue": "",
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "true",
+                                "singleValue": true
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2.3,
+            "position": [
+                2960,
+                512
+            ],
+            "id": "5f3780cc-9f8b-431f-bff6-2a510e0550ff",
+            "name": "If Stale"
+        },
+        {
+            "parameters": {
+                "operation": "get",
+                "dataTableId": {
+                    "__rl": true,
+                    "value": "YOUR_DATA_TABLE_ID",
+                    "mode": "list",
+                    "cachedResultName": "paid_ads_cache",
+                    "cachedResultUrl": "/projects/YOUR_PROJECT_ID/datatables/YOUR_DATA_TABLE_ID"
+                },
+                "matchType": "allConditions",
+                "filters": {
+                    "conditions": [
+                        {
+                            "keyName": "cache_key",
+                            "keyValue": "={{ $json.cache_key }}"
+                        }
+                    ]
+                }
+            },
+            "type": "n8n-nodes-base.dataTable",
+            "typeVersion": 1.1,
+            "position": [
+                2576,
+                512
+            ],
+            "id": "bd9b7814-c793-4fb3-99f3-a9facb11a015",
+            "name": "Get Cache Row"
+        },
+        {
+            "parameters": {
+                "jsCode": "function normKw(s) {\n  return String(s || \"\").trim().toLowerCase().replace(/\\s+/g, \" \");\n}\n\nfunction buildCacheKey(j) {\n  const countryCode = j.countryCode || \"nl\";\n  const mobileResults = j.mobileResults ?? false;\n  const scrape_pass = Number(j.scrape_pass ?? 1);\n  const keyword = j.keyword || j.term || \"\";\n  return [\"paidads\", countryCode, mobileResults ? \"m\" : \"d\", `p${scrape_pass}`, normKw(keyword)].join(\"|\");\n}\n\nconst nowIso = new Date().toISOString();\n\nreturn items.map(item =\u003e {\n  const j = item.json || {};\n\n  const keyword = j.keyword || j.term || null;\n  const countryCode = j.countryCode || \"nl\";\n  const mobileResults = j.mobileResults ?? false;\n  const scrape_pass = Number(j.scrape_pass ?? 1);\n\n  const cache_key = j.cache_key || buildCacheKey({ ...j, keyword, countryCode, mobileResults, scrape_pass });\n\n  const paidAds = Array.isArray(j.paid_ads) ? j.paid_ads : [];\n\n  const payloadObj = {\n    term: j.term || keyword,\n    paid_ads: paidAds.map(a =\u003e ({\n      directUrl: a.finalUrl || a.directUrl || null,\n      title: a.headline || a.title || null,\n      description: a.description || null,\n      adPosition: a.adPosition ?? null,\n      displayedUrl: a.displayedUrl || null\n    }))\n  };\n\n  const seenDomains = new Set(payloadObj.paid_ads.map(x =\u003e x.directUrl).filter(Boolean)).size;\n\n  return {\n    json: {\n      cache_key,\n      keyword,\n      countryCode,\n      mobileResults,\n      scrape_pass,\n      fetched_at: nowIso,\n      term: payloadObj.term,\n      seen_domains: seenDomains,\n      payload: JSON.stringify(payloadObj)\n    }\n  };\n});\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                3792,
+                304
+            ],
+            "id": "61333eed-f0fe-47c2-944f-fa9a21342165",
+            "name": "Prepare Cache Upsert"
+        },
+        {
+            "parameters": {
+                "operation": "upsert",
+                "dataTableId": {
+                    "__rl": true,
+                    "value": "YOUR_DATA_TABLE_ID",
+                    "mode": "list",
+                    "cachedResultName": "paid_ads_cache",
+                    "cachedResultUrl": "/projects/YOUR_PROJECT_ID/datatables/YOUR_DATA_TABLE_ID"
+                },
+                "filters": {
+                    "conditions": [
+                        {
+                            "keyName": "cache_key",
+                            "keyValue": "={{ $json.cache_key }}"
+                        }
+                    ]
+                },
+                "columns": {
+                    "mappingMode": "defineBelow",
+                    "value": {
+                        "mobileResults": "={{ $json.mobileResults }}",
+                        "seen_domains": "={{ $json.seen_domains }}",
+                        "cache_key": "={{ $json.cache_key }}",
+                        "keyword": "={{ $json.keyword }}",
+                        "countryCode": "={{ $json.countryCode }}",
+                        "scrape_pass": "={{ $json.scrape_pass }}",
+                        "fetched_at": "={{ $json.fetched_at }}",
+                        "term": "={{ $json.term }}",
+                        "payload": "={{ $json.payload }}"
+                    },
+                    "matchingColumns": [],
+                    "schema": [
+                        {
+                            "id": "cache_key",
+                            "displayName": "cache_key",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "readOnly": false,
+                            "removed": false
+                        },
+                        {
+                            "id": "keyword",
+                            "displayName": "keyword",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "readOnly": false,
+                            "removed": false
+                        },
+                        {
+                            "id": "countryCode",
+                            "displayName": "countryCode",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "readOnly": false,
+                            "removed": false
+                        },
+                        {
+                            "id": "mobileResults",
+                            "displayName": "mobileResults",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "boolean",
+                            "readOnly": false,
+                            "removed": false
+                        },
+                        {
+                            "id": "scrape_pass",
+                            "displayName": "scrape_pass",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "number",
+                            "readOnly": false,
+                            "removed": false
+                        },
+                        {
+                            "id": "fetched_at",
+                            "displayName": "fetched_at",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "dateTime",
+                            "readOnly": false,
+                            "removed": false
+                        },
+                        {
+                            "id": "term",
+                            "displayName": "term",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "readOnly": false,
+                            "removed": false
+                        },
+                        {
+                            "id": "seen_domains",
+                            "displayName": "seen_domains",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "number",
+                            "readOnly": false,
+                            "removed": false
+                        },
+                        {
+                            "id": "payload",
+                            "displayName": "payload",
+                            "required": false,
+                            "defaultMatch": false,
+                            "display": true,
+                            "type": "string",
+                            "readOnly": false,
+                            "removed": false
+                        }
+                    ],
+                    "attemptToConvertTypes": false,
+                    "convertFieldsToString": false
+                },
+                "options": {
+                    "dryRun": false
+                }
+            },
+            "type": "n8n-nodes-base.dataTable",
+            "typeVersion": 1.1,
+            "position": [
+                3984,
+                304
+            ],
+            "id": "2a43dadc-9d70-4e8c-b619-f6db0ade2e74",
+            "name": "Upsert row(s)"
+        },
+        {
+            "parameters": {
+                "jsCode": "const SLD = new Set([\n    \"co.uk\", \"org.uk\", \"ac.uk\",\n    \"com.au\", \"net.au\", \"org.au\",\n    \"co.in\", \"com.in\",\n    \"co.nz\",\n    \"com.br\",\n    \"com.mx\",\n    \"com.sg\",\n    \"com.tr\",\n]);\n\nfunction firstUrlLike(x) {\n    if (!x) return null;\n    if (typeof x === \"string\") return x.trim() || null;\n    return null;\n}\n\nfunction hostFromUrl(value) {\n    let raw = firstUrlLike(value);\n    if (!raw) return null;\n\n    if (!raw.startsWith(\"http\")) {\n        raw = \"https://\" + raw;\n    }\n\n    try {\n        return new URL(raw).hostname.toLowerCase().replace(/^www\\./, \"\");\n    } catch (e) {\n        const match = raw.match(/^(?:https?:\\/\\/)?([^\\/]+)/i);\n        return match ? match[1].toLowerCase().replace(/^www\\./, \"\") : null;\n    }\n}\n\nfunction rootDomain(host) {\n    if (!host) return null;\n    const h = String(host).toLowerCase().replace(/^www\\./, \"\");\n    const parts = h.split(\".\");\n    if (parts.length \u003c= 2) return h;\n\n    const last2 = parts.slice(-2).join(\".\");\n    const last3 = parts.slice(-3).join(\".\");\n\n    if (SLD.has(last2) \u0026\u0026 parts.length \u003e= 3) return last3;\n    return last2;\n}\n\nfunction safePos(x) {\n    const n = Number(x);\n    return Number.isFinite(n) ? n : 999;\n}\n\n// ---------------------------------------------------------\n// Main Logic: Reconstruct Aggregates from Cache Rows\n// ---------------------------------------------------------\n\nconst byKeyword = {};\n\nfor (const item of items) {\n    const j = item.json;\n\n    // Parse payload if strictly needed\n    let p = j.cached_payload;\n    if (!p \u0026\u0026 j.payload) {\n        try { p = JSON.parse(j.payload); } catch (e) { p = {}; }\n    }\n    p = p || {};\n\n    const keyword = j.keyword || p.term || null;\n    if (!keyword) continue;\n\n    const scrapeRun = j.scrape_pass || 1;\n    const queryUsed = j.term || keyword;\n\n    if (!byKeyword[keyword]) {\n        byKeyword[keyword] = {\n            keyword,\n            live_paid_competitors_root: new Set(),\n            paid_ads: [],\n            seen_runs_by_root: {},\n            best_ad_by_root: {},\n        };\n    }\n\n    const ads = Array.isArray(p.paid_ads) ? p.paid_ads : [];\n\n    for (const ad of ads) {\n        // cached ads usually have keys: directUrl, title, description, adPosition, displayedUrl\n        const finalUrl = firstUrlLike(ad.directUrl) || firstUrlLike(ad.finalUrl) || firstUrlLike(ad.url);\n\n        // Extract Host \u0026 Root\n        let host = hostFromUrl(finalUrl);\n        if (!host) host = hostFromUrl(ad.displayedUrl);\n\n        const root = rootDomain(host);\n\n        if (root) {\n            byKeyword[keyword].live_paid_competitors_root.add(root);\n            if (!byKeyword[keyword].seen_runs_by_root[root]) {\n                byKeyword[keyword].seen_runs_by_root[root] = new Set();\n            }\n            byKeyword[keyword].seen_runs_by_root[root].add(String(scrapeRun));\n        }\n\n        const adObj = {\n            keyword,\n            query_used: queryUsed,\n            scrape_run: scrapeRun,\n            host_domain: host,\n            root_domain: root,\n            headline: ad.title || ad.headline || null,\n            description: ad.description || ad.desc || null,\n            finalUrl: finalUrl || null,\n            adPosition: ad.adPosition ?? null,\n        };\n\n        byKeyword[keyword].paid_ads.push(adObj);\n\n        if (root \u0026\u0026 finalUrl) {\n            const pos = safePos(adObj.adPosition);\n            const existing = byKeyword[keyword].best_ad_by_root[root];\n            const ePos = existing ? safePos(existing.adPosition) : 999;\n\n            if (!existing || pos \u003c ePos) {\n                byKeyword[keyword].best_ad_by_root[root] = adObj;\n            }\n        }\n    }\n}\n\nreturn Object.values(byKeyword).map((x) =\u003e {\n    const seenCountByRoot = {};\n    for (const [root, runSet] of Object.entries(x.seen_runs_by_root)) {\n        seenCountByRoot[root] = runSet.size;\n    }\n\n    return {\n        json: {\n            keyword: x.keyword,\n            live_paid_competitors_root: [...x.live_paid_competitors_root],\n            paid_ads: x.paid_ads,\n            best_ad_by_root: x.best_ad_by_root,\n            seen_count_by_root: seenCountByRoot,\n        },\n    };\n});\n"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                4256,
+                528
+            ],
+            "id": "12749ff6-dfc8-4172-8116-b441905b905a",
+            "name": "Cached to Normalized"
+        },
+        {
+            "parameters": {},
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 3.2,
+            "position": [
+                3136,
+                304
+            ],
+            "id": "5ebb9e95-bd9f-49ab-a46d-63b45759b11a",
+            "name": "Merge Scrape Objects"
+        },
+        {
+            "parameters": {
+                "binaryPropertyName": "keyword_file",
+                "options": {
+                    "delimiter": "\t",
+                    "encoding": "utf16le",
+                    "headerRow": true,
+                    "fromLine": 3
+                }
+            },
+            "type": "n8n-nodes-base.extractFromFile",
+            "typeVersion": 1.1,
+            "position": [
+                912,
+                96
+            ],
+            "id": "cfea7644-2bf9-40d1-9563-f05de84ee905",
+            "name": "Parse KW File"
+        },
+        {
+            "parameters": {
+                "jsCode": "const seen = new Set();\nconst urls = [];\n// Collect all unique URLs from both Competitors and Ours\nfor (const item of items) {\n  const j = item.json;\n  \n  // Competitor URL\n  if (j.finalUrl) {\n    const u = j.finalUrl.trim();\n    if (!seen.has(u)) {\n      seen.add(u);\n      urls.push(u);\n    }\n  }\n  \n  // Our URL\n  if (j.our_finalUrl) {\n    const u = j.our_finalUrl.trim();\n    if (!seen.has(u)) {\n      seen.add(u);\n      urls.push(u);\n    }\n  }\n}\n// Prepare Apify Input Format (Start URLs)\nconst startUrls = urls.map(url =\u003e ({ url }));\n// Define the Page Function to clean HTML (scripts/styles removed)\nconst pageFunctionCode = `\nasync function pageFunction(context) {\n    const { request, jQuery } = context;\n    const $ = jQuery;\n    \n    // Remove invisible or irrelevant elements\n    $(\u0027script, style, noscript, svg, img, iframe\u0027).remove();\n    \n    // Extract text and clean whitespace\n    const text = $(\u0027body\u0027).text().replace(/\\\\s+/g, \u0027 \u0027).trim();\n    \n    return {\n        url: request.url,\n        title: $(\u0027title\u0027).text(),\n        text: text\n    };\n}\n`;\n// Return a single item containing the specific Apify input structure\nreturn {\n  json: {\n    apifyInput: {\n      startUrls: startUrls,\n      maxCrawlDepth: 0, // Just the landing page\n      maxCrawlPages: startUrls.length,\n      htmlTransformer: \"readableText\", // Extract clean text\n      proxyConfiguration: {\n        useApifyProxy: true,\n        apifyProxyGroups: [\"RESIDENTIAL\"], \n        apifyProxyCountry: \"NL\"\n      },\n      pageFunction: pageFunctionCode\n    }\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2512,
+                736
+            ],
+            "id": "b1e9eebd-3ed8-456f-86f8-2e59fe635956",
+            "name": "Deduplicate URLs"
+        },
+        {
+            "parameters": {
+                "operation": "Run actor and get dataset",
+                "actorSource": "store",
+                "actorId": {
+                    "__rl": true,
+                    "value": "moJRLRc85AitArpNN",
+                    "mode": "list",
+                    "cachedResultName": "Web Scraper (apify/web-scraper)",
+                    "cachedResultUrl": "https://console.apify.com/actors/moJRLRc85AitArpNN/input"
+                },
+                "customBody": "={{ $json.apifyInput }}",
+                "timeout": {},
+                "memory": 4096,
+                "authentication": "apifyOAuth2Api"
+            },
+            "type": "@apify/n8n-nodes-apify.apify",
+            "typeVersion": 1,
+            "position": [
+                2720,
+                736
+            ],
+            "id": "39afe3ce-dd2f-44e4-a8fd-4d7ac5c26a96",
+            "name": "Scrape URLs",
+            "credentials": {
+                "apifyOAuth2Api": {
+                    "id": "YOUR_APIFY_CREDENTIAL_ID",
+                    "name": "Apify API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// 1. Map Scraped Text by URL\nconst urlTextMap = {};\nfor (const item of items) {\n  const j = item.json;\n  if (j.url \u0026\u0026 j.text) {\n    urlTextMap[j.url] = j.text;\n  }\n}\n// 2. Get Original Review Rows \u0026 Global Form Data\n// We look back to \u0027Enrich KWs with Live SERP\u0027 to find the original Items structure\n// Or \u0027Output Final Review Rows\u0027 if that\u0027s what we are connected to.\nconst reviews = $items(\"Output Final Review Rows\").map(i =\u003e i.json);\n// **CRITICAL**: Fetch Email from the start (Inputs-Form)\nconst email = $items(\"Inputs-Form\")?.[0]?.json?.email || \"example@test.com\";\n// 3. Group by Keyword\nconst byKeyword = {};\nfor (const r of reviews) {\n  if (!byKeyword[r.keyword]) {\n    byKeyword[r.keyword] = {\n      keyword: r.keyword,\n      ours: {\n        url: r.our_finalUrl,\n        headlines: r.our_headlines,\n        descriptions: r.our_descriptions,\n        lp_text: urlTextMap[r.our_finalUrl] || \"(Content fetch failed)\"\n      },\n      competitors: []\n    };\n  }\n  \n  byKeyword[r.keyword].competitors.push({\n    domain: r.competitor_domain,\n    url: r.finalUrl,\n    headline: r.ad_headline,\n    description: r.ad_description,\n    lp_text: urlTextMap[r.finalUrl] || \"(Content fetch failed)\"\n  });\n}\n// 4. Construct Prompts (One per Keyword -\u003e Competitor Pair?)\n// Actually, to get \"Per Competitor\" insights, we can just keep the \"Per Keyword\" structure \n// for the AI, but ask it to be very specific about the *Competitor Strategy*.\n// The Aggregator will later pivot this.\nconst prompts = [];\nfor (const k of Object.values(byKeyword)) {\n  const compText = k.competitors.map((c, i) =\u003e `\n  -- COMPETITOR ${i+1} (${c.domain}) --\n  AD HEADLINE: ${c.headline}\n  AD DESCRIPTION: ${c.description}\n  LANDING PAGE CONTENT:\n  ${c.lp_text.slice(0, 3000)} ... (truncated)\n  `).join(\"\\n\");\n  const userPrompt = `\n  Analyze strategies for keyword: \"${k.keyword}\".\n  \n  ${compText}\n  \n  TASK:\n  For each competitor listed above, provide a strict analysis.\n  Focus on their specific Ad Tactics and Landing Page Tactics.\n  `;\n  prompts.push({\n    json: {\n      keyword: k.keyword,\n      email: email, // \u003c--- PROPPAGATED EMAIL\n      client_domain: k.ours.url, // \u003c--- PROPPAGATED CLIENT DOMAIN\n      user_prompt: userPrompt\n    }\n  });\n}\nreturn prompts;"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2928,
+                736
+            ],
+            "id": "57589764-4932-4dcb-9f8c-8f6bfaff2744",
+            "name": "Prepare AI Prompts"
+        },
+        {
+            "parameters": {
+                "subject": "=Competitive Intelligence Report",
+                "textContent": "={{ $json.email_body }}",
+                "sender": "your-email@example.com",
+                "receipients": "=recipient@example.com",
+                "additionalFields": {},
+                "requestOptions": {}
+            },
+            "type": "n8n-nodes-base.sendInBlue",
+            "typeVersion": 1,
+            "position": [
+                4064,
+                736
+            ],
+            "id": "15171cdc-9973-4a76-b8ee-27934f083ebe",
+            "name": "Send a transactional email",
+            "credentials": {
+                "sendInBlueApi": {
+                    "id": "YOUR_BREVO_CREDENTIAL_ID",
+                    "name": "Brevo API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const itemsIn = items.map(i =\u003e i.json);\n// 1. Global Context\n// We look back to \u0027Prepare AI Prompts\u0027 for the original context inputs\nconst originalInput = $items(\"Prepare AI Prompts\")[0]?.json || {}; \nconst email = originalInput.email || \"no-email@example.com\"; \nconst dateRan = new Date().toISOString().split(\u0027T\u0027)[0];\nconst competitorsMap = {};\nconst uniqueKwToCheck = new Set();\n// 2. Process All AI Outputs\nfor (const item of itemsIn) {\n    const kw = item.keyword || \"General\";\n    uniqueKwToCheck.add(kw);\n    \n    // The parser result is in \u0027output\u0027 or root\n    const data = item.output || item; \n    const comps = data.competitors_analysis || [];\n    for (const c of comps) {\n        const domain = c.competitor_name || \"Unknown\";\n        \n        if (!competitorsMap[domain]) {\n            competitorsMap[domain] = {\n                domain: domain,\n                summary: c.business_summary, // Keep the first one we see\n                keywords_seen: [],\n                ad_tactics: new Set(),\n                lp_tactics: new Set(),\n                relevance_notes: [],\n                action_items: new Set(),       // \u003c--- NEW\n                comparison_summary: c.comparison_summary || \"\" // \u003c--- NEW\n            };\n        }\n        \n        competitorsMap[domain].keywords_seen.push(kw);\n        (c.ad_tactics || []).forEach(t =\u003e competitorsMap[domain].ad_tactics.add(t));\n        (c.lp_tactics || []).forEach(t =\u003e competitorsMap[domain].lp_tactics.add(t));\n        (c.action_items || []).forEach(t =\u003e competitorsMap[domain].action_items.add(t)); // \u003c--- NEW\n        competitorsMap[domain].relevance_notes.push(`[${kw}]: ${c.keyword_relevance}`);\n        if (!competitorsMap[domain].comparison_summary \u0026\u0026 c.comparison_summary) {\n             competitorsMap[domain].comparison_summary = c.comparison_summary;\n        }\n    }\n}\n// 3. Calculate High Level Stats\nconst competitorsList = Object.values(competitorsMap);\nconst totalCompetitorsDetected = competitorsList.length;\nconst totalAdRecs = competitorsList.reduce((acc, c) =\u003e acc + c.ad_tactics.size, 0);\nconst totalLpRecs = competitorsList.reduce((acc, c) =\u003e acc + c.lp_tactics.size, 0);\n// 4. Generate Text Report\nlet report = `COMPETITIVE INTELLIGENCE REPORT\n--------------------------------------------------\nDate Ran: ${dateRan}\nTarget Keywords: ${uniqueKwToCheck.size}\nCompetitors Analyzed: ${totalCompetitorsDetected}\nSUMMARY STATS\n--------------------------------------------------\n\u003e Recommendations Found:\n  \u003e\u003e Ads: ${totalAdRecs}\n  \u003e\u003e Landing Pages: ${totalLpRecs}\nDETAILS BY COMPETITOR\n==================================================\n`;\nfor (const c of competitorsList) {\n    report += `\nCOMPETITOR: ${c.domain.toUpperCase()}\n--------------------------------------------------\nSUMMARY: ${c.summary}\nKEYWORDS FOUND: ${c.keywords_seen.join(\", \")}\nADVERTISING TACTICS:\n${Array.from(c.ad_tactics).map(t =\u003e `- ${t}`).join(\"\\n\")}\nLANDING PAGE TACTICS:\n${Array.from(c.lp_tactics).map(t =\u003e `- ${t}`).join(\"\\n\")}\nACTIONABLE INSIGHTS:\n${Array.from(c.action_items).map(t =\u003e `[ACTION] ${t}`).join(\"\\n\")}\nCOMPARISON:\n${c.comparison_summary}\nRELEVANCE NOTES:\n${c.relevance_notes.join(\"\\n\")}\n`;\n}\n// Return Clean Object for Email Node\nreturn {\n    json: {\n        email_to: email, \n        subject: `Competitor Analysis: ${dateRan}`,\n        email_body: report\n    }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                3856,
+                736
+            ],
+            "id": "4b090f4b-0999-4bef-a07e-1dca58a3e1fd",
+            "name": "Global Aggregator"
+        },
+        {
+            "parameters": {
+                "descriptionType": "manual",
+                "toolDescription": "Searches Google for a query (e.g. \u0027Tidal Control pricing\u0027). Returns top 3 URL links.",
+                "actorId": {
+                    "__rl": true,
+                    "value": "nFJndFXA5zjCTuudP",
+                    "mode": "list",
+                    "cachedResultName": "Google Search Results Scraper (apify/google-search-scraper)",
+                    "cachedResultUrl": "https://console.apify.com/actors/nFJndFXA5zjCTuudP/input"
+                },
+                "customBody": "{\n  \"queries\": \"{{ $fromAI(\u0027query\u0027) }}\",\n  \"resultsPerPage\": 10,\n  \"maxPagesPerQuery\": 1\n}",
+                "timeout": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI(\u0027Timeout\u0027, ``, \u0027number\u0027) }}",
+                "memory": 8192,
+                "authentication": "apifyOAuth2Api"
+            },
+            "type": "@apify/n8n-nodes-apify.apifyTool",
+            "typeVersion": 1,
+            "position": [
+                3376,
+                960
+            ],
+            "id": "68f80138-0ec5-493b-a42a-0a3a00ac881e",
+            "name": "search_competitor_google",
+            "credentials": {
+                "apifyOAuth2Api": {
+                    "id": "YOUR_APIFY_CREDENTIAL_ID",
+                    "name": "Apify API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "descriptionType": "manual",
+                "toolDescription": "Fetches the text content of a URL. Use this to read the competitor\u0027s \u0027About\u0027, \u0027Pricing\u0027, or \u0027Technicals\u0027 pages if the provided ad copy is insufficient.",
+                "operation": "Scrape single URL",
+                "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI(\u0027URL\u0027, ``, \u0027string\u0027) }}",
+                "authentication": "apifyOAuth2Api"
+            },
+            "type": "@apify/n8n-nodes-apify.apifyTool",
+            "typeVersion": 1,
+            "position": [
+                3200,
+                960
+            ],
+            "id": "dbb9082c-31a5-4381-a55b-1468133ef993",
+            "name": "visit_competitor_page",
+            "credentials": {
+                "apifyOAuth2Api": {
+                    "id": "YOUR_APIFY_CREDENTIAL_ID",
+                    "name": "Apify API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.user_prompt }}",
+                "options": {
+                    "systemMessage": "=### ROLE\nYou are the **Lead Strategist for a Performance Marketing Agency**.\nReviewing client: **{{ $json.client_domain }}** (B2B SaaS/Ecommerce).\n### MISSION\n1.  **Analyze**: Dissect Ad Copy \u0026 Landing Page for each competitor.\n2.  **Research**: ONLY Use `visit_competitor_page` to get more details about their features, products, solutions or pricing as needed only.\n3.  **Report**: Write a detailed, structured analysis.\n    *   For each competitor, identify:\n        *   Business Summary\n        *   Ad Tactics (e.g. \"Fear of fines\")\n        *   Landing Page Tactics (e.g. \"Instant Demo\")\n        *   Relevance Assessment\n        *   **Actionable Insights**: 2-3 specific actions the client should take, grounded in observed data (e.g., \"Competitor mentions \u0027No Credit Card\u0027, we should test this\")\n        *   **Comparison Summary**: Brief comparison of how the client stacks up against this competitor",
+                    "maxIterations": 5
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.agent",
+            "typeVersion": 3.1,
+            "position": [
+                3136,
+                736
+            ],
+            "id": "80d0c43d-235e-4ee7-bc02-eac3914e13dc",
+            "name": "Research Agent",
+            "alwaysOutputData": true
+        },
+        {
+            "parameters": {
+                "model": "x-ai/grok-4.1-fast",
+                "options": {
+                    "responseFormat": "text",
+                    "temperature": 0.3
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+            "typeVersion": 1,
+            "position": [
+                3040,
+                960
+            ],
+            "id": "6fb42aaf-9f44-44e8-9b79-41803d708f3c",
+            "name": "Grok 4.1 Fast",
+            "credentials": {
+                "openRouterApi": {
+                    "id": "YOUR_OPENROUTER_CREDENTIAL_ID",
+                    "name": "OpenRouter API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "=You provide structured data extraction. INPUT TEXT: {{ $json.output }} TASK: Extract the competitor insights from the text above and map them strictly to the requested JSON format. RETURN THE DATA OBJECT ONLY.  Do NOT return the JSON Schema Definition.  Do NOT fill data into the \"description\" fields of a schema. Just return the list of `competitors_analysis` objects.",
+                "hasOutputParser": true,
+                "batching": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1.9,
+            "position": [
+                3520,
+                736
+            ],
+            "id": "28b427f2-8bf0-4a9d-becf-9489e14e079e",
+            "name": "JSON Formatter"
+        },
+        {
+            "parameters": {
+                "model": "openai/gpt-oss-120b:free",
+                "options": {
+                    "temperature": 0.3
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+            "typeVersion": 1,
+            "position": [
+                3520,
+                928
+            ],
+            "id": "6a896661-2d9c-4997-9f1a-9a874e19075c",
+            "name": "OpenRouter Chat Model",
+            "credentials": {
+                "openRouterApi": {
+                    "id": "YOUR_OPENROUTER_CREDENTIAL_ID",
+                    "name": "OpenRouter API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "schemaType": "manual",
+                "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"competitors_analysis\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"competitor_name\": { \"type\": \"string\", \"description\": \"Domain name of the competitor\" },\n          \"business_summary\": { \"type\": \"string\", \"description\": \"1 sentence on what they do/offer\" },\n          \"ad_tactics\": { \n             \"type\": \"array\", \n             \"items\": { \"type\": \"string\" },\n             \"description\": \"List of 2-3 specific ad copy strategies used\"\n          },\n          \"lp_tactics\": { \n             \"type\": \"array\", \n             \"items\": { \"type\": \"string\" },\n             \"description\": \"List of 2-3 specific landing page features or claims\"\n          },\n          \"keyword_relevance\": { \"type\": \"string\", \"description\": \"Brief assessment of LP relevance\" },\n          \"action_items\": { \n             \"type\": \"array\", \n             \"items\": { \"type\": \"string\" },\n             \"description\": \"List of 2-3 specific actions. MUST reference specific Ad/LP elements observed.\"\n          },\n          \"comparison_summary\": { \"type\": \"string\", \"description\": \"Brief comparison of client vs competitor based on observed data.\" }\n        },\n        \"required\": [\"competitor_name\", \"business_summary\", \"ad_tactics\", \"lp_tactics\", \"keyword_relevance\", \"action_items\", \"comparison_summary\"]\n      }\n    }\n  },\n  \"required\": [\"competitors_analysis\"]\n}",
+                "autoFix": true
+            },
+            "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+            "typeVersion": 1.3,
+            "position": [
+                3648,
+                928
+            ],
+            "id": "62dc570c-6e31-4361-ada5-b7d9286f74e2",
+            "name": "Structured Output Parser"
+        }
+    ],
+    "connections": {
+        "Inputs-Form": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Auction File",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Parse Ad Report File",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Parse KW File",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Apify Scrape Google Paid Results": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Paid Ads \u0026 LPs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Auction File": {
+            "main": [
+                [
+                    {
+                        "node": "Enrich Auction with KW Perf",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Enrich Auction with KW Perf": {
+            "main": [
+                [
+                    {
+                        "node": "Merge",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Normalize KW Rows \u0026 Comp Metrics": {
+            "main": [
+                [
+                    {
+                        "node": "Select Top KWs \u0026 Comps",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Select Top KWs \u0026 Comps": {
+            "main": [
+                [
+                    {
+                        "node": "Build 3 Pass SERP Queries",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Enrich KWs with Live SERP",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Build 3 Pass SERP Queries": {
+            "main": [
+                [
+                    {
+                        "node": "Build Cache Keys",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Paid Ads \u0026 LPs": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Cache Upsert",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Enrich KWs with Live SERP": {
+            "main": [
+                [
+                    {
+                        "node": "Rescore Comp",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Rescore Comp": {
+            "main": [
+                [
+                    {
+                        "node": "Output Final Review Rows",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Output Final Review Rows": {
+            "main": [
+                [
+                    {
+                        "node": "Deduplicate URLs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Ad Report File": {
+            "main": [
+                [
+                    {
+                        "node": "Merge",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Merge": {
+            "main": [
+                [
+                    {
+                        "node": "Normalize KW Rows \u0026 Comp Metrics",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Build Cache Keys": {
+            "main": [
+                [
+                    {
+                        "node": "Cache Missing",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Get Cache Row",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Cache Missing": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Scrape Objects",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Cache Fresh or Stale": {
+            "main": [
+                [
+                    {
+                        "node": "If Stale",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If Stale": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Scrape Objects",
+                        "type": "main",
+                        "index": 1
+                    }
+                ],
+                [
+                    {
+                        "node": "Cached to Normalized",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Cache Row": {
+            "main": [
+                [
+                    {
+                        "node": "Cache Fresh or Stale",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Cache Upsert": {
+            "main": [
+                [
+                    {
+                        "node": "Upsert row(s)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Upsert row(s)": {
+            "main": [
+                [
+                    {
+                        "node": "Cached to Normalized",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Cached to Normalized": {
+            "main": [
+                [
+                    {
+                        "node": "Enrich KWs with Live SERP",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Merge Scrape Objects": {
+            "main": [
+                [
+                    {
+                        "node": "Apify Scrape Google Paid Results",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse KW File": {
+            "main": [
+                [
+                    {
+                        "node": "Enrich Auction with KW Perf",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Deduplicate URLs": {
+            "main": [
+                [
+                    {
+                        "node": "Scrape URLs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Scrape URLs": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare AI Prompts",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare AI Prompts": {
+            "main": [
+                [
+                    {
+                        "node": "Research Agent",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Global Aggregator": {
+            "main": [
+                [
+                    {
+                        "node": "Send a transactional email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "search_competitor_google": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Research Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "visit_competitor_page": {
+            "ai_tool": [
+                [
+                    {
+                        "node": "Research Agent",
+                        "type": "ai_tool",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Research Agent": {
+            "main": [
+                [
+                    {
+                        "node": "JSON Formatter",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Grok 4.1 Fast": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Research Agent",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "JSON Formatter": {
+            "main": [
+                [
+                    {
+                        "node": "Global Aggregator",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenRouter Chat Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "JSON Formatter",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    },
+                    {
+                        "node": "Structured Output Parser",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Structured Output Parser": {
+            "ai_outputParser": [
+                [
+                    {
+                        "node": "JSON Formatter",
+                        "type": "ai_outputParser",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}
